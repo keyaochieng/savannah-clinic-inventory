@@ -1,75 +1,49 @@
-# React + TypeScript + Vite
+# StockPulse — Clinic Stock Console
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A clinic stock console for searching, filtering, and correcting inventory from
+ward tablets, where every item is a shareable URL and every screen stays usable
+when the network is slow or a request fails.
 
-Currently, two official plugins are available:
+Built on the [DummyJSON](https://dummyjson.com/docs) API, treating its product
+catalogue as the clinic's stock catalogue.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Status
 
-## React Compiler
+In progress. Tooling and CI are set up; feature build underway.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech stack
 
-## Expanding the ESLint configuration
+- **React + TypeScript** (Vite)
+- Data fetching/caching: _to be added_
+- Routing: _to be added_
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Running locally
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Requires Node 18+ (built on Node 25; CI runs on Node 22 LTS).
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- \`npm run dev\` — start the dev server
+- \`npm run build\` — type-check and build for production
+- \`npm run lint\` — run ESLint
+- \`npm run format\` — format all files with Prettier
+- \`npm run format:check\` — check formatting without writing (used in CI)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Tooling and CI
 
-```
+- **Prettier** + **.editorconfig** for consistent formatting
+- **ESLint** (flat config) with a chosen ruleset
+- **commitlint** + **husky** enforcing Conventional Commits locally via a
+  commit-msg hook, plus format/lint on pre-commit
+- **GitHub Actions** runs format check, lint, and commit-message checks on
+  every PR; these must pass before merge
+
+## Design notes, decision log, and AI reflection
+
+_Design write-up (Section 1), decision log, and AI reflection to follow in
+subsequent commits._
