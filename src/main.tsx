@@ -5,11 +5,14 @@ import { RouterProvider } from 'react-router-dom';
 import './index.css';
 import { queryClient } from './lib/queryClient';
 import { router } from './routes/router';
+import { AuthProvider } from './features/auth/AuthContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </AuthProvider>
   </StrictMode>,
 );
