@@ -1,9 +1,41 @@
+import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useProduct } from './hooks';
+import { useProduct, useUpdateStock } from './hooks';
 
 export function ItemDetailPage() {
   const { id } = useParams();
   const { data: product, isLoading, isError, refetch } = useProduct(id ?? '');
+
+  // The mutation that saves a new stock count (optimistic update + rollback
+  // live inside this hook).
+  const updateStock = useUpdateStock(id ?? '');
+
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveOk, setSaveOk] = useState(false);
+
+  function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaveError(null);
+    setSaveOk(false);
+
+    // Read the value straight from the form's input (uncontrolled field).
+    const formData = new FormData(event.currentTarget);
+    const newStock = Number(formData.get('stock'));
+
+    // Guard against nonsense input before firing the request.
+    if (!Number.isInteger(newStock) || newStock < 0) {
+      setSaveError('Enter a whole number of 0 or more.');
+      return;
+    }
+
+    updateStock.mutate(newStock, {
+      onSuccess: () => {
+        setSaveOk(true);
+        setTimeout(() => setSaveOk(false), 3000);
+      },
+      onError: () => setSaveError('Could not save. The stock count was not changed.'),
+    });
+  }
 
   if (isLoading) {
     return <p className="py-12 text-center text-slate-500">Loading item…</p>;
@@ -66,7 +98,53 @@ export function ItemDetailPage() {
         </div>
       </div>
 
-      {/* Stock correction form goes here in the next branch */}
+      {/* Stock correction. The input is uncontrolled and keyed to the current
+          stock, so it resets to the latest value whenever the product's stock
+          changes — no syncing effect needed. */}
+      <form
+        onSubmit={handleSave}
+        className="max-w-sm space-y-3 rounded-lg border border-slate-200 bg-white p-4"
+      >
+        <div>
+          <label htmlFor="stock" className="mb-1 block text-sm font-medium text-slate-700">
+            Correct stock count
+          </label>
+          <p className="mb-2 text-xs text-slate-500">Set the count to match a physical count.</p>
+          <input
+            key={product.stock}
+            id="stock"
+            name="stock"
+            type="number"
+            min="0"
+            step="1"
+            defaultValue={product.stock}
+            onChange={() => {
+              setSaveOk(false);
+              setSaveError(null);
+            }}
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+
+        {saveError && (
+          <p role="alert" className="text-sm text-red-600">
+            {saveError}
+          </p>
+        )}
+        {saveOk && (
+          <p role="status" className="text-sm text-green-600">
+            Stock updated.
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={updateStock.isPending}
+          className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {updateStock.isPending ? 'Saving…' : 'Save stock count'}
+        </button>
+      </form>
     </div>
   );
 }

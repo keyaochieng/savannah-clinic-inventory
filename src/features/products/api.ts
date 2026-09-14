@@ -53,8 +53,15 @@ export async function fetchCategories(): Promise<Category[]> {
   return apiFetch<Category[]>('/products/categories');
 }
 
-export { PAGE_SIZE };
-
 export async function fetchProduct(id: string): Promise<Product> {
   return apiFetch<Product>(`/products/${id}`);
 }
+
+export async function updateProductStock(id: number, stock: number): Promise<Product> {
+  return apiFetch<Product>(`/products/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ stock }),
+  });
+}
+
+export { PAGE_SIZE };
