@@ -1,37 +1,73 @@
-// The single doorway every API request goes through.
-// Analogy: this is the "hand" that automatically flashes your wristband
-// (the access token) at every bar (every request), so no individual
-// request has to remember to do it. Later, this same hand will learn to
-// quietly get a new wristband when the old one expires (401 → refresh → retry).
+// The single doorway every API request goes through — now with the smart
+// expiry handling. Analogy: the "hand" that flashes your wristband at every
+// bar, and when the bartender says "expired" (401), quietly shows the
+// re-entry pass (refresh token), gets a fresh band, and re-orders — all
+// without you having to leave and re-queue at the door.
+
+import { refreshSession } from '../features/auth/api';
 
 const BASE_URL = 'https://dummyjson.com';
 
-// Where we keep the wristband info written down (see AuthContext later).
-// Reading it here keeps token-handling in ONE place.
 function getAccessToken(): string | null {
   return localStorage.getItem('accessToken');
 }
-// `T` is a generic type param: the caller supplies the expected
-// response shape, e.g. `apiFetch<User>(...)`, so the return value
-// is typed as `Promise<User>` instead of `any`/`unknown`.
-// Erased at compile time — no runtime effect.
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getAccessToken();
 
-  const response = await fetch(`${BASE_URL}${path}`, {
+function getRefreshToken(): string | null {
+  return localStorage.getItem('refreshToken');
+}
+
+// When a refresh succeeds we must save BOTH new tokens (DummyJSON rotates
+// the refresh token — the old one becomes invalid). Keeping these in sync
+// with localStorage is what lets the next request and the next refresh work.
+function storeTokens(accessToken: string, refreshToken: string) {
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+}
+
+function clearSession() {
+  localStorage.removeItem('auth_user');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+}
+
+// Build the request with the current wristband attached.
+async function makeRequest(path: string, options: RequestInit): Promise<Response> {
+  const token = getAccessToken();
+  return fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      // Flash the wristband — but only if we have one.
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
+}
+
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  let response = await makeRequest(path, options);
+
+  // Wristband expired mid-session? Try to get a new one and retry ONCE.
+  if (response.status === 401) {
+    const refreshToken = getRefreshToken();
+
+    if (!refreshToken) {
+      // No re-entry pass at all — nothing to try. Back to the door.
+      clearSession();
+      throw new Error('Session expired. Please sign in again.');
+    }
+
+    try {
+      const fresh = await refreshSession(refreshToken);
+      storeTokens(fresh.accessToken, fresh.refreshToken); // rotation: save both
+      response = await makeRequest(path, options); // re-order with fresh band
+    } catch {
+      // Re-entry pass is dead too — really do have to re-queue at the door.
+      clearSession();
+      throw new Error('Session expired. Please sign in again.');
+    }
+  }
 
   if (!response.ok) {
-    // For now, any failure just throws. React Query will catch this and
-    // turn it into an error state. (The 401-refresh cleverness comes in
-    // step 6, once the refresh machinery exists.)
     throw new Error(`Request failed: ${response.status}`);
   }
 
