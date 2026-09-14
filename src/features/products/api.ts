@@ -14,12 +14,11 @@ interface FetchProductsParams {
   search: string;
 }
 
-export async function fetchProducts({
-  page,
-  category,
-  sort,
-  search,
-}: FetchProductsParams): Promise<ProductListResponse> {
+// Pure function: decides the endpoint and query string from the current
+// filters. Extracted from fetchProducts so it can be unit-tested without a
+// network call. Key rule: search and category are separate endpoints on
+// DummyJSON and don't compose — search wins when present (decision-logged).
+export function buildProductsPath({ page, category, sort, search }: FetchProductsParams): string {
   const skip = (page - 1) * PAGE_SIZE;
   const params = new URLSearchParams({
     limit: String(PAGE_SIZE),
@@ -34,19 +33,18 @@ export async function fetchProducts({
     params.set('order', order);
   }
 
-  // Endpoint choice: search and category are separate endpoints on DummyJSON
-  // and don't compose. Search takes precedence when present (decision-logged).
-  let path: string;
   if (search) {
     params.set('q', search);
-    path = `/products/search?${params.toString()}`;
-  } else if (category) {
-    path = `/products/category/${category}?${params.toString()}`;
-  } else {
-    path = `/products?${params.toString()}`;
+    return `/products/search?${params.toString()}`;
   }
+  if (category) {
+    return `/products/category/${category}?${params.toString()}`;
+  }
+  return `/products?${params.toString()}`;
+}
 
-  return apiFetch<ProductListResponse>(path);
+export async function fetchProducts(params: FetchProductsParams): Promise<ProductListResponse> {
+  return apiFetch<ProductListResponse>(buildProductsPath(params));
 }
 
 export async function fetchCategories(): Promise<Category[]> {

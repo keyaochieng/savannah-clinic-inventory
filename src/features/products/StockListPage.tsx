@@ -8,15 +8,13 @@ export function StockListPage() {
   const { search, category, sort, page, setSearch, setCategory, setSort, setPage } =
     useListParams();
 
-  // Local input state so typing feels instant, then debounced into the URL.
-  // The `key={search}` on the input (below) remounts it with a fresh value
-  // whenever the URL search changes from elsewhere (e.g. picking a category
-  // clears q), so the box clears without a syncing effect.
+  // Controlled input value. Kept in local state so typing is instant and the
+  // input keeps focus (no remounting).
   const [searchInput, setSearchInput] = useState(search);
 
-  // Debounce: wait 350ms after the user stops typing before updating the URL
-  // (which triggers the fetch). Fewer requests, and combined with the query
-  // key this is what makes the search race-safe on slow connections.
+  // Debounce typing into the URL. 350ms after the user stops, push to the URL
+  // (which triggers the fetch). Combined with the query key, this makes search
+  // race-safe on slow connections.
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchInput !== search) setSearch(searchInput);
@@ -44,10 +42,9 @@ export function StockListPage() {
             Search stock
           </label>
           <input
-            key={search}
             id="search"
             type="search"
-            defaultValue={search}
+            value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by name…"
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
