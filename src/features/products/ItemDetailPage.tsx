@@ -2,12 +2,36 @@ import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useProduct, useUpdateStock } from './hooks';
 
+// Small reusable back-to-list button so both the error state and the main
+// view show the same styled control.
+function BackToList() {
+  return (
+    <Link
+      to="/"
+      className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        className="h-4 w-4"
+        aria-hidden="true"
+      >
+        <path
+          fillRule="evenodd"
+          d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.06 10l3.73 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.24a.75.75 0 0 1 0-1.06l4.25-4.24a.75.75 0 0 1 1.06 0Z"
+          clipRule="evenodd"
+        />
+      </svg>
+      Back to stock list
+    </Link>
+  );
+}
+
 export function ItemDetailPage() {
   const { id } = useParams();
   const { data: product, isLoading, isError, refetch } = useProduct(id ?? '');
 
-  // The mutation that saves a new stock count (optimistic update + rollback
-  // live inside this hook).
   const updateStock = useUpdateStock(id ?? '');
 
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -18,11 +42,9 @@ export function ItemDetailPage() {
     setSaveError(null);
     setSaveOk(false);
 
-    // Read the value straight from the form's input (uncontrolled field).
     const formData = new FormData(event.currentTarget);
     const newStock = Number(formData.get('stock'));
 
-    // Guard against nonsense input before firing the request.
     if (!Number.isInteger(newStock) || newStock < 0) {
       setSaveError('Enter a whole number of 0 or more.');
       return;
@@ -52,9 +74,7 @@ export function ItemDetailPage() {
           >
             Try again
           </button>
-          <Link to="/" className="text-sm text-brand-600 underline">
-            Back to stock list
-          </Link>
+          <BackToList />
         </div>
       </div>
     );
@@ -62,9 +82,7 @@ export function ItemDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/" className="text-sm text-brand-600 hover:underline">
-        ← Back to stock list
-      </Link>
+      <BackToList />
 
       <div className="flex flex-col gap-6 sm:flex-row">
         <img
