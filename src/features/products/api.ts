@@ -1,5 +1,5 @@
 import { apiFetch } from '../../lib/api';
-import type { ProductListResponse, Category } from './types';
+import type { Product, ProductListResponse, Category } from './types';
 
 const PAGE_SIZE = 12;
 
@@ -54,3 +54,7 @@ export async function fetchCategories(): Promise<Category[]> {
 }
 
 export { PAGE_SIZE };
+
+export async function fetchProduct(id: string): Promise<Product> {
+  return apiFetch<Product>(`/products/${id}`);
+}
