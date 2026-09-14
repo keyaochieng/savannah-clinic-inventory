@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import { fetchProducts, fetchCategories } from './api';
+import { fetchProducts, fetchCategories, fetchProduct } from './api';
 
 interface UseProductsParams {
   page: number;
@@ -28,5 +28,12 @@ export function useCategories() {
     queryKey: ['categories'],
     queryFn: fetchCategories,
     staleTime: Infinity, // categories don't change during a session
+  });
+}
+
+export function useProduct(id: string) {
+  return useQuery({
+    queryKey: ['product', id],
+    queryFn: () => fetchProduct(id),
   });
 }
